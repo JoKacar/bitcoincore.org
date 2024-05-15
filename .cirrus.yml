@@ -9,7 +9,7 @@ env:
 task:
   name: Bundler build
 
-  bootstrap_script: gem install bundler
+  bootstrap_script: gem install bundler -v 2.4.22
   bundler_cache:
     folder: /usr/local/bundle
     fingerprint_script:
@@ -37,3 +37,19 @@ task:
   build_and_test_script: 
     - rm Gemfile.lock
     - make all
+
+task:
+  name: verify commits
+  only_if: $CIRRUS_BRANCH == 'master'
+  container:
+    image: debian:latest
+  install_script:
+    - apt update
+    - >
+      apt install -y
+      git
+      gnupg
+  verify_script:
+    - mapfile -t KEYS < contrib/verify-commits/trusted-keys
+    - gpg --keyserver hkps://keys.openpgp.org --recv-keys "${KEYS[@]}"
+    - ./contrib/verify-commits/verify-commits.sh
